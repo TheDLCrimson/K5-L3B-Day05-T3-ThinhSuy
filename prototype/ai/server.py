@@ -125,6 +125,21 @@ def guard(decision: dict) -> tuple[dict, list[str]]:
     passengers = [p for p in decision.get("passengers") or PASSENGERS if p in PASSENGERS] or PASSENGERS
     decision["passengers"] = passengers
     flight = decision.get("flight")
+    # spec.md §4 rule 4: the 5-year-old never travels without the adult. Checked on the passenger
+    # list, not on the customer's wording, so "cho bé đi chuyến 21h trước" is caught too.
+    child_alone = (decision["action"] in {"giu_cho", "de_xuat_doi"} and passengers == ["Bình"]) or (
+        decision["action"] == "de_xuat_hoan" and passengers == ["An"]
+    )
+    if child_alone:
+        notes.append("bé Bình 5 tuổi sẽ không có người lớn đi cùng, chuyển nhân viên")
+        decision.update(
+            action="chuyen_nhan_vien",
+            flight=None,
+            passengers=PASSENGERS,
+            reply="Nếu làm vậy thì bé Bình 5 tuổi sẽ bay mà không có người lớn đi cùng, việc này cần thủ tục riêng của hãng. "
+            "Mình không tự đổi hay gửi gì, và chuyển ca cho nhân viên hỗ trợ kèm tóm tắt.",
+        )
+        return decision, notes
     if flight is not None and flight not in FLIGHTS:
         notes.append(f"chuyến {flight!r} không có trong dữ liệu, bỏ")
         decision["flight"] = flight = None

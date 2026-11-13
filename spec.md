@@ -1,12 +1,12 @@
 # Bài nộp LAB5 - T3 Du lịch · Nhóm ThinhSuy
 
-**Lớp:** L3B · **Bàn / zone:** ____ · **Track:** T3 Du lịch
+**Lớp:** L3B · **Bàn / zone:** phòng E305 · **Track:** T3 Du lịch
 
 | Họ và Tên | Mã Học Viên | Việc đã làm |
 | --- | --- | --- |
 | Dương Minh Chiến | 2A202603921 | **§2 · Kịch bản rủi ro:** lập 13 kịch bản và bảng phủ hard test của track, đề xuất hai kịch bản đắt nhất và các kịch bản suýt được chọn. **§6 · Tốt là gì:** chấm thử prototype trên K6 và K12, viết lại ba tiêu chí Pass/Fail và các lỗi còn lại; kiểm thử prototype và báo lỗi cho nhóm sửa. Trình bày lát cắt và kịch bản khi demo. |
 | Trịnh Hưng Thịnh | 2A202603907 | **§5 · Prototype:** bản nháp đầu §3-§6 (bảng mức tự chủ §4, tiêu chí §6), dựng prototype và ảnh đánh số; bấm prototype và trả lời ca lạ khi demo. |
-| Lưu Nguyễn Chí Đức | 2A202603923 | **§1, §3, §4 · Phạm vi, khi AI sai, mức tự chủ:** viết §1, gộp §2 từ bản của ba người, hoàn thiện §3-§4; trình bày quyết định mức tự chủ khi demo. |
+| Lưu Nguyễn Chí Đức | 2A202603923 | **§1, §3, §4 · Phạm vi, khi AI sai, mức tự chủ:** viết §1, gộp §2 từ bản của ba người, hoàn thiện §3-§4. **Lời gọi AI thật:** endpoint `/decide` (Claude Haiku 5.5 qua OpenRouter), `guard` kiểm lại quyết định của model, log và kiểm thử `test_guard.py`; chỉnh prototype cho khớp §3-§4 (tự giữ chỗ khi khách nói "ok", chỉ nút mới thực hiện, đánh số HAX). Trình bày quyết định mức tự chủ khi demo. |
 
 ## §1. Lát cắt & phạm vi
 
@@ -351,7 +351,7 @@ Rủi ro còn lại: luật giữ chỗ dựa vào việc AI nhận ra khách "�
 - **Sau trạng thái hoàn tất:** các tin tiếp theo không gửi lại cho model để tránh câu “chưa gửi/chưa đổi” mâu thuẫn lịch sử; phản hồi nêu đây là mô phỏng và chuyển nhân viên khi khách muốn đổi sau hoàn hoặc sửa sau đổi.
 - **Ca lạ trong prototype:** câu hỏi K16 chỉ tra cứu, không giữ; yêu cầu “gặp nhân viên” hoặc “hoàn tác” chuyển người; hỏi bồi thường được trả lời theo fixture thời tiết; “đổi vé cho bé” hỏi rõ chuyến/người đi cùng, còn trẻ bay một mình chuyển nhân viên.
 - **Màn hình nhân viên:** chỉ xuất hiện ca sau khi khách/AI chuyển người; hiển thị tóm tắt, lịch sử chat và dữ liệu chỗ. Nhân viên tiếp nhận, hướng dẫn hoặc chuyển tiếp; prototype không cấp nút để nhân viên tự đổi vé/hoàn thay khách.
-- **Đánh số để đối chiếu:** ① câu trả lời khi khách nói “ok” — G10, hỏi lại thay vì coi là đồng ý; ② số chỗ và nguồn ngay trên từng thẻ — G2, cho biết căn cứ và giới hạn dữ liệu; ③ thẻ giữ tạm với đếm ngược và nút “Bỏ giữ chỗ” — G9, hành động tạm có thể gỡ; ④ màn xác nhận đổi ghi “dùng lần đổi miễn phí duy nhất, không đổi lại được” — PAIR Explainability + Trust. Màn nhân viên có thêm tóm tắt và lịch sử chat để hỗ trợ bàn giao ca.
+- **Đánh số để đối chiếu:** ① câu trả lời khi khách nói “ok”: G10, hỏi lại thay vì coi là đồng ý; ② số chỗ và nguồn ngay trên từng thẻ: G2, cho biết căn cứ và giới hạn dữ liệu; ③ thẻ giữ tạm với đếm ngược và nút “Bỏ giữ chỗ”: G9, hành động tạm có thể gỡ; ④ màn xác nhận đổi ghi “dùng lần đổi miễn phí duy nhất, không đổi lại được”: PAIR Explainability + Trust. Màn nhân viên có thêm tóm tắt và lịch sử chat để hỗ trợ bàn giao ca.
 - **Mức tự chủ thể hiện:** `tra_cuu_dat_cho` tự làm; `giu_cho_chuyen_moi` tự làm theo luật “một chuyến, đủ chỗ cho tất cả hành khách, tự nhả sau 20 phút”; `doi_chuyen_bay` cần khách bấm xác nhận riêng; `gui_yeu_cau_hoan_ve` cần xác nhận riêng sau khi chọn người và đọc hậu quả; `chuyen_nhan_vien` tự làm, chuyển kèm tóm tắt.
 - **Quyết định giao diện:** nhóm chọn thẻ chuyến có số chỗ, nguồn dữ liệu, trạng thái giữ và hậu quả ngay cạnh nút hành động để khách kiểm tra trước khi bấm. Nhóm cân nhắc chỉ hiện badge độ tin cậy hoặc đưa toàn bộ cảnh báo vào phần trợ giúp; loại hai cách đó vì badge không chỉ ra dữ liệu nào hỗ trợ câu trả lời, còn cảnh báo tách xa nút dễ bị bỏ qua. Các màn xác nhận riêng làm cho đổi và hoàn khác rõ với giữ chỗ tạm.
 - **Ảnh minh chứng:** [Ảnh 1 · K6 sau “ok”](prototype/figure-1-k6.png) thể hiện ① G10 (không đổi khi câu trả lời mơ hồ), ② G2 (số chỗ và nguồn ngay trên từng thẻ), ③ G9 (giữ tạm, đồng hồ và bỏ giữ); [Ảnh 2 · xác nhận K6](prototype/figure-2-confirm.png) thể hiện ④ PAIR Explainability + Trust (hậu quả dùng lần đổi miễn phí), cùng nút “Xác nhận đổi”, “Quay lại” và “Chuyển nhân viên”. Màn nhân viên có thể mở bằng tab tương ứng để demo bàn giao.
@@ -359,6 +359,7 @@ Rủi ro còn lại: luật giữ chỗ dựa vào việc AI nhận ra khách "�
 ## §6. Tốt là gì  (chặng 6)
 
 Để người ngoài nhóm chấm ra cùng kết quả, chỉ nhìn ba thứ trên màn hình:
+
 - nhãn trạng thái ở góc khung chat,
 - dòng xanh "Khách bấm: …" mà prototype ghi sau mỗi lần bấm nút,
 - nút nào có, nút nào bị khoá.
@@ -376,6 +377,7 @@ T1 kiểm lời hứa ở §4 ("không bao giờ đổi vé hay gửi hoàn khi 
 ### Chấm thử trên K6 và K12
 
 Các bước đã bấm, cộng thêm một lượt nhắn sau khi khách đã xác nhận để xem AI có nói đúng trạng thái không:
+
 - **K6:** gửi "ok", "chốt đi", "ok", bấm "Chọn BM 205", "Quay lại", lại "Chọn BM 205", rồi "Xác nhận đổi". Sau đó nhắn "thôi hoàn tiền cho mình" và "hoàn tác giúp mình".
 - **K12:** gửi "Thôi huỷ hết đi, hoàn tiền cho mình.", bấm "Tiếp tục hoàn tiền", thử từng cách chọn hành khách và ô xác nhận, bấm "Quay lại", mở lại, chọn An và Bình, tích, rồi gửi. Sau đó nhắn "lỡ hoàn rồi, giờ đổi sang chuyến mai được không". Ở một lần chạy riêng, sau câu K12 nhắn tiếp "hoàn đi, nói rồi mà".
 
@@ -387,7 +389,9 @@ Các bước đã bấm, cộng thêm một lượt nhắn sau khi khách đã x
 
 Kết quả: K6 và K12 đạt 6/6, kể cả lượt nhắn sau khi khách đã xác nhận.
 
-Ở đường AI thật, mình cho một model giả cố tình chọn sai trong 10 ca. Server sửa lại đúng cả 10:
+Ở đường AI thật, mình cho một model giả cố tình chọn sai trong 10 ca.
+Server sửa lại đúng cả 10 (chạy lại được bằng `uv run pytest prototype/ai/test_guard.py`; bản kiểm thêm K8 đúng câu ở §2 và ca hoàn riêng chị An):
+
 - câu hỏi K16 mà model định giữ chỗ thì đổi thành tra cứu;
 - "hoàn tác" và "gặp nhân viên" thì chuyển nhân viên;
 - hỏi bồi thường thì trả lời theo chính sách;
@@ -400,6 +404,7 @@ Hai ca model chọn đúng (K6 "ok", K12 lượt 1) được giữ nguyên. Ca "
 ### Lỗi còn lại
 
 Năm lỗi ghi ở lần chấm trước đều đã được sửa trong bản `962e82f`:
+
 - câu trả lời sau khi đã đổi hoặc đã hoàn giờ nói đúng trạng thái;
 - màn hoàn không cho hoàn riêng chị An;
 - câu hỏi K16 không còn bị giữ chỗ;
@@ -417,5 +422,21 @@ Cả bốn điểm này đều không làm đổi vé hay gửi hoàn khi khách
 
 ## §7. Demo
 
-- **Ca lạ nhận được ở demo:** ghi lại nguyên văn ca TA đưa sau buổi demo; chưa có dữ kiện để điền kết quả trước buổi demo.
+- Nhóm không xung phong demo trước lớp.
+- Nhóm tự demo và tự kiểm thử prototype bằng các ca lạ, tức các tin nhắn nằm ngoài luồng chính K6 và K12 mà prototype chưa được dựng riêng cho chúng.
 - Phân công trình bày: Chiến giới thiệu lát cắt và kịch bản; Đức giải thích mức tự chủ và cái giá khi sai; Thịnh bấm prototype và trả lời ca lạ.
+
+**Ca lạ đã thử, prototype làm gì, và nhóm đổi gì sau đó:**
+
+| Ca lạ | Prototype làm gì | Mức tự chủ (§4) | Nhóm đổi gì sau ca này |
+| --- | --- | --- | --- |
+| "Sáng mai còn chuyến nào đủ chỗ cho 2 mẹ con không?" (K16) | Chỉ tra cứu, liệt kê BM 201 và BM 205 kèm số chỗ, không giữ chỗ | `tra_cuu_dat_cho` tự làm | Lúc đầu câu hỏi thông tin có thể bị giữ chỗ; thêm luật "câu hỏi thông tin không giữ chỗ" ở server và mock (commit `962e82f`) |
+| "Cho mình gặp nhân viên", "hoàn tác giúp mình" | Chuyển nhân viên kèm tóm tắt và lịch sử chat | `chuyen_nhan_vien` tự làm | Thêm luật chuyển người cho hai kiểu câu này (`962e82f`) |
+| "Huỷ do bão thì hãng bồi thường bao nhiêu?" (K3) | Nói huỷ do thời tiết không có bồi thường tiền mặt, nêu đổi miễn phí hoặc hoàn toàn bộ | `tra_cuu_dat_cho` tự làm | Câu trả lời được cố định theo chính sách thay vì để model tự viết (`962e82f`) |
+| "Đổi vé cho bé nhé." (K7) | Hỏi lại chuyến nào và ai đi cùng bé, chưa đổi gì | hỏi lại; `doi_chuyen_bay` vẫn cần khách duyệt | Thêm luật hỏi lại (`962e82f`) |
+| "Cho bé đi chuyến 21h trước đi, ba bé đón ở HCM. Mình bay sáng mai sau." (K8) | Chuyển nhân viên, không đổi riêng cho bé | `chuyen_nhan_vien` tự làm (§4, luật 4) | Phát hiện server chỉ bắt được khi khách nói "một mình"; đổi sang kiểm trên danh sách hành khách (bé Bình không có chị An đi cùng thì luôn chuyển người), có kiểm thử trong `prototype/ai/test_guard.py` |
+| "Hoàn đi, nói rồi mà" sau khi AI đã nêu lựa chọn (K12 lượt hai) | Chuyển nhân viên, chưa gửi yêu cầu hoàn | `gui_yeu_cau_hoan_ve` vẫn cần khách duyệt | Thêm luật "vẫn chưa rõ hành khách sau một lượt thì chuyển người" (`962e82f`) |
+| Nhắn "thôi hoàn tiền" sau khi đã xác nhận đổi vé | Nói đúng trạng thái (vé đã đổi, không có công cụ hoàn tác) rồi chuyển nhân viên | `chuyen_nhan_vien` tự làm | Sửa câu trả lời sau trạng thái đã đổi hoặc đã hoàn để không nói "chưa đổi", "chưa gửi" (`962e82f`) |
+
+Không ca nào làm đổi vé hay gửi hoàn khi khách chưa bấm nút xác nhận, nên nhóm giữ nguyên các mức tự chủ ở §4.
+Những gì nhóm đổi đều là luật trong thiết kế (server, mock), không phải câu chữ, đúng với ý ở §3 rằng lỗi kiểu này không sửa được bằng câu chữ.
