@@ -115,30 +115,131 @@ Vì sao hai kịch bản này đắt hơn các kịch bản còn lại:
 
 ## §3. Khi AI sai  (chặng 3)
 
-> Nháp: phần K12 lấy từ bản đầu của Thịnh; phần K6 và các mục còn thiếu (ai được báo, sau bao lâu; loại lỗi của K6) hoàn thiện ở chặng 3.
-
-### K12 - "Thôi huỷ hết đi, hoàn tiền cho mình"
-
-- AI: "Mình chưa gửi yêu cầu hoàn. 'Hoàn hết' có thể là cho An, Bình hoặc cả hai. Gửi rồi không huỷ được; có thể mất tới 90 ngày và tiền về phương thức thanh toán gốc (một số trường hợp voucher). Bạn muốn hoàn cho ai, hay muốn xem chuyến đổi?"
-- Màn hình giữ trạng thái **Chưa gửi**; không gọi tool gửi.
-  Có nút "Xem chuyến đổi" và "Chuyển nhân viên".
-  Nếu khách chọn hoàn, bước xác nhận cuối liệt kê hành khách và cảnh báo không thể rút lại.
-- Chọn hỏi lại thay vì gửi luôn hoặc chuyển người ngay: hỏi một câu phân giải được đối tượng, còn gửi hoàn thì không thể đảo; chuyển người ngay làm chậm lựa chọn đổi dù chưa cần chuyên môn.
-  Nếu khách vẫn mơ hồ sau một lượt, chuyển nhân viên.
-- Loại lỗi: **người dùng (ý định mơ hồ)**.
-  Không đổ lỗi; nêu cụ thể phần chưa rõ và hậu quả của thao tác.
-- HAX/PAIR:
-  - **G10** (thu hẹp khi nghi ngờ): câu hỏi lại ở trên.
-  - **G8/G9** (gạt bỏ, sửa dễ): trạng thái "Chưa gửi" cùng đường quay lại chọn đổi.
-  - **PAIR Explainability**: cảnh báo ghi rõ vì sao AI chưa hành động.
-- Ai được báo, sau bao lâu: *(chặng 3)*
+Bốn đường đi của lát cắt: **happy path** là K16 (hỏi chuyến đủ chỗ, AI tra cứu và liệt kê) · **low-confidence** là K6 (một chữ "ok" chưa đủ để biết khách chọn gì) · **failure / không căn cứ** là K2, K3 (dữ liệu không có giờ hạ cánh, không có bồi thường) · **correction** là K13 (khách báo AI vừa đổi nhầm).
+Hai kịch bản đắt nhất rơi vào low-confidence (K6) và một lỗi ngữ cảnh (K12); đường correction K13 được thiết kế kèm để đủ ba loại lỗi.
 
 ### K6 - Khách trả lời "ok" sau ba lựa chọn
 
-Viết ở chặng 3: AI nói gì nguyên văn · người dùng thấy gì · làm gì tiếp · ai được báo, sau bao lâu · chọn hỏi lại / trả lời kèm giới hạn / chuyển người và phương án đã loại · loại lỗi · HAX/PAIR.
+**AI nói (nguyên văn):**
 
-**Lỗi câu chữ không cứu được** *(nháp của Thịnh)*: tool có thể trả chỗ BM 217 vừa hết ngay sau khi đọc.
-Thiết kế cần gọi giữ chỗ có thời hạn, chỉ báo thành công sau khi tool xác nhận; giữ chỗ lỗi thì làm mới dữ liệu hoặc chuyển người, không chỉ thêm câu xin lỗi.
+> "Mình chưa đổi vé nào. Chị chọn giúp mình một chuyến cho cả chị An và bé Bình nhé. BM 217 21:00 tối nay chỉ còn 1 chỗ nên không đủ cho 2 người. Trong lúc chị chọn, mình đã giữ tạm 2 chỗ trên BM 201 07:00 sáng mai, chuyến sớm nhất đủ chỗ cho cả hai, trong 20 phút. Giữ chỗ chưa phải đổi vé, và sẽ tự nhả nếu chị không chọn."
+
+**Người dùng thấy:**
+
+- Ba thẻ chuyến, mỗi thẻ ghi giờ cất cánh, số chỗ còn và nguồn "theo đặt chỗ TRV-7Q2K lúc 15:00".
+- Thẻ BM 217 bị làm mờ, nhãn "Không đủ chỗ cho 2 người", không bấm được.
+- Thẻ BM 201 có nhãn "Đang giữ tạm, chưa đổi vé", đồng hồ đếm ngược 20:00 và nút "Bỏ giữ chỗ".
+- Hai nút chọn, mỗi nút ghi rõ chuyến và hành khách: "Chọn BM 201 07:00 · An + Bình" và "Chọn BM 205 09:30 · An + Bình".
+- Nút "Chuyển nhân viên" luôn hiện ở cuối khung chat.
+
+**Người dùng làm gì tiếp:**
+
+- Bấm một nút chọn: màn xác nhận hiện chuyến, hai hành khách và dòng "Đổi vé sẽ dùng lần đổi miễn phí duy nhất, không đổi lại được", kèm hai nút "Xác nhận đổi" và "Quay lại".
+  Chỉ nút "Xác nhận đổi" gọi `doi_chuyen_bay`.
+  Nếu khách chọn BM 205, AI giữ chỗ BM 205 và nhả chỗ đang giữ trên BM 201.
+- Gõ thêm chữ ("ok", "được", "chốt đi"): AI không đổi theo chữ, nhắc lại một câu và chỉ vào hai nút chọn.
+- Không làm gì: phút 15 khách nhận thông báo trong app; phút 20 chỗ giữ tự nhả và ca được chuyển nhân viên.
+
+**Ai được báo, sau bao lâu:**
+
+- Khách: thông báo đẩy trong app ở phút 15, "Chỗ BM 201 đang giữ cho chị còn 5 phút".
+- Nhân viên: chỉ khi hết 20 phút mà khách chưa chọn, nhận ca kèm tóm tắt (ba chuyến đã đưa, đã giữ BM 201, khách trả lời "ok", chưa chọn chuyến).
+- Trong lúc khách còn đang trả lời thì không báo nhân viên, vì một câu hỏi lại là đủ.
+
+**Quyết định: hỏi lại, và tự giữ chỗ chuyến sớm nhất đủ chỗ trong lúc chờ.**
+
+| Phương án | Chọn hay loại | Vì sao |
+| --- | --- | --- |
+| Hỏi lại kèm nút chọn, tự giữ chỗ BM 201 | **Chọn** | "Ok" không nói chuyến nào, nên phải hỏi; giữ chỗ tự nhả sau 20 phút nên giữ sai gần như không mất gì, còn không giữ thì chỗ có thể hết trong lúc khách phân vân (§1, hướng sai của `giu_cho_chuyen_moi`). BM 201 là chuyến sớm nhất đủ chỗ cho 2 người (9 chỗ), đúng rubric riêng T3 mục 5: "đưa lựa chọn sớm nhất còn chỗ, giữ chỗ trong lúc chờ khách xác nhận". |
+| Hỏi lại, không giữ chỗ | Loại | BM 205 chỉ còn 4 chỗ; khách đi cùng con nhỏ có thể mất vài phút để trả lời, và chuyến có thể hết trong lúc đó. |
+| Giữ chỗ cả BM 201 lẫn BM 205 | Loại | Chiếm 2 trong 4 chỗ cuối của BM 205 của khách khác, và hai thẻ cùng "đang giữ" làm khách tưởng mình đã chọn. |
+| Đoán và hỏi xác nhận ("Mình hiểu là BM 201 07:00 cho 2 người, đúng không?") | Loại | AI vẫn đoán, và một khách đang mệt có thể lại trả lời "ok" cho chính lời đoán đó: cùng lỗi K6, chỉ chậm một vòng. |
+| Chuyển nhân viên ngay | Loại | Một câu hỏi giải quyết được, không cần chuyên môn; bắt khách chờ nhân viên khi chỗ đang ít là sai theo hướng "chờ". |
+
+**Loại lỗi: lỗi người dùng (input mơ hồ).**
+Hệ thống chưa làm gì sai; khách trả lời thiếu thông tin.
+Cách nói vì vậy không xin lỗi và không đổ lỗi ("chị trả lời chưa rõ"): AI chỉ nói nó chưa làm gì và cần biết thêm điều gì ("Mình chưa đổi vé nào. Chị chọn giúp mình một chuyến").
+Cách sửa là một câu hỏi kèm nút chọn, không phải một lời xin lỗi.
+
+**Nguyên tắc HAX/PAIR, trỏ vào chỗ cụ thể:**
+
+- **G10 - Thu hẹp phạm vi khi nghi ngờ:** câu "Mình chưa đổi vé nào. Chị chọn giúp mình một chuyến" thay cho việc gọi `doi_chuyen_bay` theo chữ "ok".
+- **G2 - Làm rõ hệ thống làm tốt đến đâu:** mỗi thẻ chuyến ghi số chỗ và nguồn "theo đặt chỗ TRV-7Q2K lúc 15:00"; thẻ BM 217 ghi "Không đủ chỗ cho 2 người" thay vì "còn chỗ".
+- **G9 - Sửa dễ dàng:** thẻ giữ chỗ có đếm ngược và nút "Bỏ giữ chỗ"; màn xác nhận có nút "Quay lại".
+- **PAIR Explainability + Trust:** màn xác nhận ghi vì sao phải bấm xác nhận: "dùng lần đổi miễn phí duy nhất, không đổi lại được".
+
+### K12 - "Thôi huỷ hết đi, hoàn tiền cho mình"
+
+**AI nói (nguyên văn):**
+
+> "Mình chưa gửi yêu cầu hoàn nào. Chuyến bị huỷ do bão nên chị được đổi miễn phí một lần, và sáng mai vẫn còn BM 201 07:00 (9 chỗ) và BM 205 09:30 (4 chỗ), đủ cho cả chị An và bé Bình. Nếu chị vẫn muốn hoàn: yêu cầu hoàn gửi rồi thì không huỷ được, tiền về phương thức thanh toán gốc (có trường hợp hoàn bằng voucher) và có thể mất tới 90 ngày. Chị muốn xem chuyến đổi, hay hoàn cho cả hai người?"
+
+**Người dùng thấy:**
+
+- Nhãn trạng thái **"Chưa gửi"** ở đầu khung chat; AI chưa gọi `gui_yeu_cau_hoan_ve`.
+- Hai thẻ đặt cạnh nhau, cùng cỡ:
+  - "Đổi miễn phí": BM 201 07:00 · 9 chỗ và BM 205 09:30 · 4 chỗ, cho An + Bình.
+  - "Hoàn tiền": ba hậu quả (không huỷ được · về phương thức thanh toán gốc · tới 90 ngày).
+- Nút "Chuyển nhân viên".
+
+**Người dùng làm gì tiếp:**
+
+- Bấm "Đổi miễn phí": đi tiếp luồng chọn chuyến như K6.
+- Bấm "Hoàn tiền": màn xác nhận cuối có ô chọn hành khách (An, Bình), ba hậu quả viết lại một lần nữa, và hai nút "Gửi yêu cầu hoàn (không huỷ được)" và "Quay lại".
+  Chỉ nút "Gửi yêu cầu hoàn" gọi `gui_yeu_cau_hoan_ve`.
+- Gõ thêm chữ ("hoàn đi", "nói rồi mà"): AI không gửi theo chữ, chỉ vào màn xác nhận.
+- Sau một lượt mà khách vẫn chưa rõ muốn gì, hoặc vẫn đang bực: AI chuyển nhân viên.
+
+**Ai được báo, sau bao lâu:**
+
+- Khách: ngay khi bấm gửi, nhận biên nhận trong app và email (đã gửi gì, cho hành khách nào, tiền về đâu, tối đa 90 ngày).
+- Nhân viên: ngay khi khách vẫn chưa rõ sau một lượt hỏi lại, nhận ca kèm tóm tắt (khách đòi hoàn, đã đưa lựa chọn đổi, chưa gửi gì).
+
+**Quyết định: trả lời kèm giới hạn (đưa ra quyền đổi miễn phí và hậu quả của hoàn) rồi hỏi lại; không gửi.**
+
+| Phương án | Chọn hay loại | Vì sao |
+| --- | --- | --- |
+| Nói quyền lợi và hậu quả trước, rồi hỏi lại; gửi chỉ qua màn xác nhận cuối | **Chọn** | Gửi hoàn không đảo được, nên mọi thông tin khách cần để đổi ý phải đến trước khi gửi; một câu trả lời có đủ quyền lợi là cách rẻ nhất để chặn cái sai. |
+| Gửi luôn theo lời khách | Loại | `gui_yeu_cau_hoan_ve` gửi rồi không huỷ được; khách mất cả hai chỗ và chờ tới 90 ngày (K14 cho thấy hậu quả). |
+| Chỉ hỏi "chị muốn hoàn cho ai?" (bản nháp đầu) | Loại | Câu hỏi đó chỉ làm rõ câu chữ; khách bực sẽ trả lời "cả hai" và AI vẫn gửi đúng lời nhưng sai ý, vì khách có thể chưa biết mình được đổi miễn phí. |
+| Chuyển nhân viên ngay | Loại | Chưa cần chuyên môn; trong lúc chờ, BM 205 (4 chỗ) có thể hết, nên chờ cũng là một kiểu sai. Nhân viên chỉ vào khi một lượt hỏi lại không đủ. |
+
+**Loại lỗi: lỗi ngữ cảnh.**
+Nếu AI gửi hoàn, mọi thứ chạy đúng thiết kế: khách nói rõ "hoàn tiền", tool chạy đúng, nhưng kết quả sai với tình huống của khách (đang bực, vẫn cần bay, chưa biết quyền đổi miễn phí).
+Cách nói vì vậy không xin lỗi về hệ thống và không bắt khách nói lại cho rõ, mà đưa ra đúng thông tin khách đang thiếu.
+Cách sửa nằm ở thiết kế, không chỉ ở câu chữ: thẻ "Đổi miễn phí" đặt cạnh thẻ "Hoàn tiền" và bước xác nhận cuối tách riêng.
+
+**Nguyên tắc HAX/PAIR, trỏ vào chỗ cụ thể:**
+
+- **G10:** nhãn "Chưa gửi" và câu "Mình chưa gửi yêu cầu hoàn nào" thay cho việc gọi `gui_yeu_cau_hoan_ve` theo câu "huỷ hết".
+- **PAIR Explainability + Trust:** màn xác nhận cuối ghi ba hậu quả ngay trên nút gửi.
+- **G9:** nút "Quay lại" trên màn xác nhận và thẻ "Đổi miễn phí" luôn bấm được.
+
+### Đường sửa sai K13 - AI vừa đổi nhầm (lỗi hệ thống)
+
+**AI nói (nguyên văn):**
+
+> "Mình xin lỗi, mình đã đổi nhầm vé của chị sang BM 201 07:00 thay vì BM 205 09:30. Lần đổi miễn phí đã dùng cho lần đổi này, và mình không tự hoàn tác được. Mình đã giữ 2 chỗ trên BM 205 trong 20 phút và chuyển ca cho nhân viên kèm toàn bộ lịch sử chat."
+
+- Người dùng thấy: thông báo "Trợ lý đã đổi nhầm - đang chuyển nhân viên", thẻ giữ chỗ BM 205 có đếm ngược, trạng thái "Nhân viên đã nhận ca".
+- Ai được báo: nhân viên, ngay lập tức, kèm tóm tắt (khách chọn BM 205, AI đã đổi sang BM 201, lần đổi miễn phí đã dùng).
+- AI không gọi `doi_chuyen_bay` lần nữa, vì lần đổi thứ hai không còn miễn phí và có thể làm hỏng thêm.
+
+### Ba loại lỗi, ba cách nói, ba cách sửa
+
+| Loại lỗi | Kịch bản | Cách nói | Cách sửa |
+| --- | --- | --- | --- |
+| Người dùng | K6 "ok" | Không xin lỗi, không đổ lỗi; nói AI chưa làm gì và cần biết thêm gì | Một câu hỏi kèm nút chọn |
+| Ngữ cảnh | K12 "huỷ hết, hoàn tiền" | Không xin lỗi, không bắt nói lại; đưa đúng thông tin khách đang thiếu (quyền đổi miễn phí, hậu quả của hoàn) | Thiết kế: đặt lựa chọn đổi cạnh lựa chọn hoàn, bước xác nhận cuối tách riêng |
+| Hệ thống | K13 AI đổi nhầm | AI nhận lỗi về mình ("mình đã đổi nhầm"), nói thật cái không làm được ("không tự hoàn tác được") | Không thử lại; giữ chỗ chuyến đúng và chuyển nhân viên ngay |
+
+### Lỗi sửa câu chữ không cứu được: coi chữ "ok" là xác nhận
+
+- Dù prompt có viết "không được coi 'ok' là xác nhận", quyết định vẫn nằm ở việc model đọc một câu chữ tự do: "ok", "được", "chốt", "ừ đổi đi" đều có thể bị hiểu là đồng ý, và chỉ cần sai một lần là mất lần đổi miễn phí (K6) hoặc mất tiền (K12).
+- Thiết kế cứu bằng cách tách "chọn" khỏi "thực hiện": `doi_chuyen_bay` và `gui_yeu_cau_hoan_ve` chỉ chạy được từ nút xác nhận mang theo mã chuyến và danh sách hành khách cụ thể, không bao giờ chạy từ một tin nhắn chữ.
+- Tin nhắn chữ chỉ có thể dẫn tới tra cứu, giữ chỗ, hỏi lại hoặc chuyển nhân viên, nên K6 bị chặn dù model hiểu "ok" thế nào.
+- Cùng thiết kế này cũng chặn K10: một tin tự xưng nhân viên không có nút nào để bấm thay khách.
+- Luật này được ghi lại ở §4 như một tool tách bước.
 
 ## §4. Mức tự chủ  (chặng 4)
 
