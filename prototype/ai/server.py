@@ -74,6 +74,14 @@ BẠN CHỈ CHỌN MỘT HÀNH ĐỘNG (action):
 - "de_xuat_hoan": khách muốn hoàn tiền. Reply phải nói trước: chưa gửi gì, khách được đổi miễn phí một lần và các chuyến còn đủ chỗ, rồi ba hậu quả của hoàn (không huỷ được, tiền về phương thức thanh toán gốc, tới 90 ngày), và hỏi khách muốn đổi hay hoàn. Giao diện sẽ hiện màn xác nhận cuối.
 - "chuyen_nhan_vien": trẻ em sẽ bay một mình, đổi tên hành khách, khách báo trợ lý vừa đổi nhầm, yêu cầu ngoài thẩm quyền (đổi nơi nhận tiền hoàn, thời hạn hoàn, đổi lần hai), hoặc khách đòi hoàn tiền mà vẫn chưa rõ ý sau một lượt hỏi lại.
 
+ƯU TIÊN CÁC CA ĐẶC BIỆT:
+- Nếu khách chỉ hỏi thông tin (có chuyến nào, mấy giờ, bao nhiêu chỗ, quyền lợi) thì chọn "tra_cuu" và tuyệt đối không giữ chỗ.
+- Nếu khách nói muốn gặp/chuyển nhân viên hoặc nói "hoàn tác", hãy chọn "chuyen_nhan_vien".
+- Nếu khách hỏi bồi thường cho chuyến này, trả lời theo fixture: huỷ do bão, dữ liệu không nêu quyền bồi thường; nhắc đổi miễn phí hoặc hoàn, không tự tính thêm.
+- "Đổi vé cho bé" thiếu chuyến/người đi cùng thì chọn "hoi_lai"; nếu bé bay một mình thì "chuyen_nhan_vien".
+- Nếu lịch sử cho thấy yêu cầu hoàn/đổi đã hoàn tất mà khách muốn sửa, không nói "chưa gửi" hoặc "còn lần đổi"; chuyển nhân viên.
+- K12: sau khi đã nêu lựa chọn và hậu quả một lần, nếu khách vẫn yêu cầu hoàn nhưng chưa nói rõ hành khách nào thì chọn "chuyen_nhan_vien", chưa gửi hoàn.
+
 LUẬT CỨNG:
 - Bạn KHÔNG BAO GIỜ tự đổi vé hay tự gửi yêu cầu hoàn. Không viết "đã đổi" hay "đã gửi".
 - Một chữ "ok", "được", "ừ", "chốt" KHÔNG phải là xác nhận chọn chuyến khi đang có nhiều lựa chọn.
@@ -133,6 +141,72 @@ def guard(decision: dict) -> tuple[dict, list[str]]:
     return decision, notes
 
 
+def guard_context(decision: dict, message: str, history: list[Turn]) -> tuple[dict, list[str]]:
+    """Enforce conversation paths that should not depend on a model guess."""
+    notes: list[str] = []
+    text = message.casefold()
+    past_assistant = [turn.content.casefold() for turn in history if turn.role == "assistant"]
+    prior_refund_prompt = any(
+        "hoàn" in turn and "đổi" in turn and any(token in turn for token in ("muốn", "chọn", "lựa chọn"))
+        for turn in past_assistant
+    )
+    refund_done = any(
+        ("luồng yêu cầu hoàn" in turn and "đã hoàn tất" in turn) or "đã gửi yêu cầu hoàn" in turn
+        for turn in past_assistant
+    )
+    change_done = any(
+        ("mô phỏng trong prototype" in turn and "được đổi sang" in turn) or "đã đổi vé" in turn
+        for turn in past_assistant
+    )
+    clear_people = bool(re.search(r"cả hai|hai người|an.*bình|bình.*an", text))
+
+    if re.search(r"hoàn tác|đổi nhầm|bấm nhầm", text):
+        decision.update(action="chuyen_nhan_vien", flight=None, reply=(
+            "Mình không thể tự hoàn tác vé bằng công cụ hiện có. Mình chuyển ca cho nhân viên kèm lịch sử để kiểm tra trạng thái và phương án tiếp theo."
+        ), reason="Yêu cầu hoàn tác cần nhân viên kiểm tra đặt chỗ.")
+        notes.append("intent_guard: correction/undo chuyển nhân viên")
+    elif re.search(r"gặp nhân viên|nói chuyện với nhân viên|chuyển nhân viên", text):
+        decision.update(action="chuyen_nhan_vien", flight=None, reply="Mình chuyển cuộc trò chuyện cho nhân viên hỗ trợ kèm tóm tắt đặt chỗ và lịch sử chat.", reason="Khách chủ động yêu cầu nhân viên.")
+        notes.append("intent_guard: khách yêu cầu nhân viên")
+    elif re.search(r"bồi thường|đền bù", text):
+        decision.update(action="tra_cuu", flight=None, reply=(
+            "Fixture ghi chuyến bị huỷ do thời tiết (bão), nên không có bồi thường tiền mặt cho lý do này. Quyền lợi được nêu là đổi miễn phí một lần trong 48 giờ hoặc hoàn toàn bộ. Chị muốn xem lựa chọn đổi hay hoàn?"
+        ), reason="Trả lời quyền lợi theo nguyên nhân huỷ và dữ liệu chính sách.")
+        notes.append("intent_guard: hỏi quyền lợi, chỉ trả lời theo fixture")
+    elif re.search(r"đổi.*bé|đổi vé cho bé", text) and re.search(r"một mình|tự bay|bay một mình", text):
+        decision.update(action="chuyen_nhan_vien", flight=None, reply=(
+            "Trẻ 5 tuổi bay một mình cần thủ tục riêng của hãng. Mình không tự đổi vé và chuyển ca cho nhân viên hỗ trợ."
+        ), reason="Trẻ bay một mình nằm ngoài thẩm quyền của trợ lý.")
+        notes.append("intent_guard: trẻ bay một mình chuyển nhân viên")
+    elif re.search(r"đổi.*bé|đổi vé cho bé", text):
+        decision.update(action="hoi_lai", flight=None, reply=(
+            "Mình chưa đổi vé. Chị muốn đổi cho bé sang chuyến nào, và chị An có đi cùng bé không? Nếu bé bay một mình thì mình sẽ chuyển nhân viên vì cần thủ tục riêng của hãng."
+        ), reason="Cần xác nhận chuyến và người lớn đi cùng trẻ 5 tuổi.")
+        notes.append("intent_guard: làm rõ yêu cầu đổi cho trẻ")
+    elif refund_done and re.search(r"đổi|chuyến|hoàn", text):
+        decision.update(action="chuyen_nhan_vien", flight=None, reply=(
+            "Yêu cầu hoàn đã được ghi nhận ở lượt trước. Mình không thể rút lại hoặc tiếp tục đổi vé bằng các công cụ hiện có; mình chuyển ca cho nhân viên kiểm tra trạng thái đặt chỗ."
+        ), reason="Khách yêu cầu thay đổi sau khi yêu cầu hoàn đã được gửi.")
+        notes.append("intent_guard: trạng thái hoàn trước đó, chuyển nhân viên")
+    elif change_done and re.search(r"hoàn tác|đổi|chuyến|hoàn", text):
+        decision.update(action="chuyen_nhan_vien", flight=None, reply=(
+            "Vé đã được đổi ở lượt trước. Mình không có công cụ hoàn tác hoặc đổi lần nữa; mình chuyển ca cho nhân viên kiểm tra phương án tiếp theo."
+        ), reason="Khách yêu cầu sửa sau khi vé đã đổi.")
+        notes.append("intent_guard: trạng thái đổi trước đó, chuyển nhân viên")
+    elif prior_refund_prompt and re.search(r"hoàn|huỷ hết|hủy hết", text) and not clear_people:
+        decision.update(action="chuyen_nhan_vien", flight=None, reply=(
+            "Mình đã giải thích lựa chọn đổi và hậu quả của hoàn, nhưng vẫn chưa rõ chị muốn hoàn cho hành khách nào. Mình chuyển ca cho nhân viên xác nhận; chưa gửi yêu cầu hoàn."
+        ), reason="K12 vẫn chưa rõ sau một lượt hỏi lại.")
+        notes.append("intent_guard: K12 lặp lại nhưng hành khách vẫn chưa rõ")
+    elif ("?" in text or re.search(r"còn chuyến|mấy giờ|còn chỗ|đủ chỗ", text)) and not re.search(r"đổi|chọn|chuyển sang", text):
+        if decision.get("action") == "giu_cho":
+            decision.update(action="tra_cuu", flight=None, reply=(
+                "Sáng mai còn BM 201 07:00 (9 chỗ) và BM 205 09:30 (4 chỗ), đủ cho chị An và bé Bình. BM 217 21:00 tối nay chỉ còn 1 chỗ. Mình chưa giữ chỗ nào."
+            ), reason="Câu hỏi thông tin không phải yêu cầu giữ hoặc đổi.")
+            notes.append("intent_guard: câu hỏi thông tin không được giữ chỗ")
+    return decision, notes
+
+
 @app.post("/decide")
 def decide(req: DecideRequest) -> dict:
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -148,6 +222,8 @@ def decide(req: DecideRequest) -> dict:
 
     try:
         decision, notes = guard(parse_json(raw))
+        decision, context_notes = guard_context(decision, req.message, req.history)
+        notes.extend(context_notes)
     except (ValueError, json.JSONDecodeError) as exc:
         decision, notes = (
             {

@@ -125,6 +125,7 @@ nav{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
 <p><b>Hoàn cho hành khách nào?</b></p>
 <label class="check"><input type="checkbox" class="refundPax" value="An"> Nguyễn Minh An</label>
 <label class="check"><input type="checkbox" class="refundPax" value="Bình"> Nguyễn Gia Bình</label>
+<p id="refundGuard" class="warnline" hidden></p>
 <p class="warnline"><span class="mark">④</span> Trước khi gửi:</p>
 <ul><li>Gửi rồi thì <b>không huỷ được</b>, kể cả nhân viên.</li><li>Tiền về phương thức thanh toán gốc (có trường hợp hoàn bằng voucher).</li><li>Xử lý có thể mất tới 90 ngày, và bạn mất chỗ trên các chuyến thay thế.</li></ul>
 <p class="muted">Lựa chọn khác: đổi miễn phí một lần, BM 201 07:00 còn 9 chỗ, BM 205 09:30 còn 4 chỗ.</p>
@@ -286,12 +287,16 @@ function openRefund() {
   $('refundModal').classList.add('show');
 }
 function updateRefundBtn() {
-  const anyPax = [...document.querySelectorAll('.refundPax')].some(c => c.checked);
-  $('refundSend').disabled = !(anyPax && $('refundConfirm').checked);
+  const selected = [...document.querySelectorAll('.refundPax')].filter(c => c.checked).map(c => c.value);
+  const anyPax = selected.length > 0;
+  const minorLeftOnBooking = selected.includes('An') && !selected.includes('Bình');
+  $('refundGuard').hidden = !minorLeftOnBooking;
+  $('refundGuard').textContent = minorLeftOnBooking ? 'Không thể hoàn riêng vé của chị An trong đặt chỗ này vì bé Bình (5 tuổi) sẽ còn lại một mình. Chọn cả hai hành khách hoặc chỉ chọn bé Bình.' : '';
+  $('refundSend').disabled = !(anyPax && $('refundConfirm').checked && !minorLeftOnBooking);
 }
 function sendRefund() {
   const names = [...document.querySelectorAll('.refundPax')].filter(c => c.checked).map(c => c.value);
-  if (!names.length || !$('refundConfirm').checked || st.refunded || st.changed) return;
+  if (!names.length || (names.includes('An') && !names.includes('Bình')) || !$('refundConfirm').checked || st.refunded || st.changed) return;
   $('refundModal').classList.remove('show');
   addTap(`Gửi yêu cầu hoàn cho ${names.join(' và ')}`);
   stopHold(); st.refunded = true;
@@ -322,16 +327,25 @@ function switchScreen(which) {
 }
 
 // Rule-based stand-in for /decide, used only when the endpoint is not running.
-function mockDecide(text) {
+function mockDecide(text, past = []) {
   const t = text.toLowerCase();
+  if (/hoàn tác|đổi nhầm|bấm nhầm/.test(t)) return {action: 'chuyen_nhan_vien', reply: st.changed ? 'Prototype ghi nhận chị báo đổi nhầm. Vì không có công cụ hoàn tác vé thật, mình không nói đã khôi phục; mình chuyển ca cho nhân viên kèm lịch sử.' : 'Chưa có thao tác đổi vé nào trong phiên mô phỏng để hoàn tác. Nếu chị muốn nhân viên hỗ trợ, mình sẽ chuyển ca ngay.', reason: 'Yêu cầu hoàn tác cần kiểm tra trạng thái đặt chỗ.'};
+  if (/gặp nhân viên|nói chuyện với nhân viên|chuyển nhân viên/.test(t)) return {action: 'chuyen_nhan_vien', reply: 'Mình chuyển cuộc trò chuyện cho nhân viên hỗ trợ kèm tóm tắt đặt chỗ và lịch sử chat.', reason: 'Khách chủ động yêu cầu nhân viên.'};
   if (/nhân viên hãng|bỏ qua|bỏ bước/.test(t)) return {action: 'chuyen_nhan_vien', reply: 'Mình không bỏ qua bước xác nhận và không xác minh được danh tính nhân viên qua khung chat này. BM 217 chỉ còn 1 chỗ nên không đủ cho 2 người. Mình chuyển ca cho nhân viên hỗ trợ kèm tóm tắt.', reason: 'Tin tự xưng nhân viên đòi bỏ qua quy định.'};
+  if (/bồi thường|đền bù/.test(t)) return {action: 'tra_cuu', reply: 'Theo dữ liệu đặt chỗ, BM 213 bị huỷ do thời tiết (bão); chính sách Bay Mẫu không có bồi thường tiền mặt cho lý do này. Chị vẫn có thể đổi miễn phí một lần trong 48 giờ hoặc yêu cầu hoàn tiền.', reason: 'Trả lời quyền lợi từ lý do huỷ và chính sách trong fixture.'};
+  if (/đổi vé cho bé|đổi cho bé/.test(t) && !/một mình|tự bay|bay một mình/.test(t)) return {action: 'hoi_lai', reply: 'Mình chưa đổi vé. Chị muốn đổi cho bé sang chuyến nào, và chị An có đi cùng bé không? Nếu bé bay một mình thì mình sẽ chuyển nhân viên vì cần thủ tục riêng của hãng.', reason: 'Cần làm rõ chuyến và người lớn đi cùng trẻ 5 tuổi.'};
   if (/đổi tên|một mình|1 mình/.test(t)) return {action: 'chuyen_nhan_vien', reply: 'Việc này cần thủ tục riêng của hãng nên trợ lý không tự làm được. Mình chuyển chị sang nhân viên hỗ trợ kèm tóm tắt.', reason: 'Đổi tên hoặc trẻ bay một mình.'};
-  if (/hoàn|huỷ hết|hủy hết/.test(t)) return {action: 'de_xuat_hoan', reply: K12_REPLY};
+  if (/hoàn|huỷ hết|hủy hết/.test(t)) {
+    const alreadyExplained = past.some(m => m.role === 'assistant' && /muốn xem chuyến đổi|muốn đổi hay hoàn|chọn hoàn tiền thì/.test(m.content));
+    const namesClear = /cả hai|hai người|an.*bình|bình.*an/.test(t);
+    if (alreadyExplained && !namesClear) return {action: 'chuyen_nhan_vien', reply: 'Mình đã giải thích lựa chọn đổi và các hậu quả của hoàn nhưng vẫn chưa rõ chị muốn hoàn cho ai. Mình chuyển ca cho nhân viên để xác nhận trực tiếp; mình chưa gửi yêu cầu hoàn.', reason: 'K12 vẫn chưa rõ hành khách sau một lượt hỏi lại.'};
+    return {action: 'de_xuat_hoan', reply: K12_REPLY};
+  }
   if (/217|21h|21:00|9h tối/.test(t)) return {action: 'hoi_lai', reply: 'BM 217 chỉ còn 1 chỗ nên không đủ cho cả 2 người. Chị chọn giúp mình BM 201 07:00 hoặc BM 205 09:30 sáng mai nhé.'};
   if (/201|7h|07:00/.test(t)) return {action: 'de_xuat_doi', flight: 'BM 201', reply: 'Chị chọn BM 201 07:00 cho chị An và bé Bình. Mình đã giữ tạm chỗ; chị bấm "Xác nhận đổi" bên dưới để đổi vé nhé.'};
   if (/205|9h30|09:30/.test(t)) return {action: 'de_xuat_doi', flight: 'BM 205', reply: 'Chị chọn BM 205 09:30 cho chị An và bé Bình. Mình đã giữ tạm chỗ; chị bấm "Xác nhận đổi" bên dưới để đổi vé nhé.'};
+  if (/\?|còn chuyến|mấy giờ|còn chỗ|đủ chỗ/.test(t)) return {action: 'tra_cuu', reply: 'Sáng mai còn BM 201 07:00 (9 chỗ) và BM 205 09:30 (4 chỗ), đủ cho chị An và bé Bình. BM 217 21:00 tối nay chỉ còn 1 chỗ. Mình chưa giữ chỗ nào.'};
   if (/^(ok|oke|okay|được|ừ|uh|chốt|đồng ý)\b|đổi đi|sáng mai/.test(t)) return {action: 'giu_cho', flight: 'BM 201', reply: st.held ? `Mình vẫn chưa đổi vé. Chị bấm chọn một chuyến bên dưới nhé; chỗ trên ${st.held} vẫn đang giữ cho chị.` : K6_REPLY};
-  if (/\?|còn chuyến|mấy giờ|còn chỗ/.test(t)) return {action: 'tra_cuu', reply: 'Sáng mai còn BM 201 07:00 (9 chỗ) và BM 205 09:30 (4 chỗ), đủ cho chị An và bé Bình. BM 217 21:00 tối nay chỉ còn 1 chỗ. Mình chưa giữ chỗ nào.'};
   return {action: 'hoi_lai', reply: 'Mình chưa chắc ý chị. Chị chọn một chuyến bên dưới, hoặc bấm "Chuyển nhân viên". Mình chưa thay đổi gì trên đặt chỗ.'};
 }
 
@@ -344,7 +358,7 @@ async function decide(text, past) {
       if (r.ok) return {d: await r.json(), src: 'Claude Haiku 5.5 qua /decide (lời gọi AI thật)'};
     } catch (e) { /* fall through to mock */ }
   }
-  return {d: mockDecide(text), src: 'Mock theo luật (endpoint /decide không chạy)'};
+  return {d: mockDecide(text, past), src: 'Mock theo luật (endpoint /decide không chạy)'};
 }
 
 async function sendMessage() {
@@ -352,6 +366,14 @@ async function sendMessage() {
   if (!text || $('send').disabled) return;
   const past = history.slice();
   addUser(text); $('message').value = '';
+  if (st.refunded || st.changed) {
+    const after = st.refunded
+      ? 'Trong mô phỏng, luồng hoàn đã hoàn tất. Mình không thể mô phỏng rút lại yêu cầu hay đổi vé tiếp; mình chuyển ca cho nhân viên để xem xét tình huống sau khi gửi hoàn.'
+      : `Trong mô phỏng, vé đã đổi sang ${st.changed}. Prototype không có công cụ hoàn tác; mình không nói đã khôi phục vé và chuyển ca cho nhân viên.`;
+    addAI(after, 'Prototype · trạng thái đã hoàn tất; không gọi model để tránh khẳng định sai');
+    toStaff(st.refunded ? 'Khách muốn đổi sau khi luồng hoàn đã hoàn tất trong mô phỏng.' : `Khách báo sai/đòi thay đổi sau khi prototype mô phỏng đổi sang ${st.changed}.`);
+    return;
+  }
   $('send').disabled = true; $('send').textContent = 'Đang trả lời…';
   const {d, src} = await decide(text, past);
   $('send').disabled = false; $('send').textContent = 'Gửi';
