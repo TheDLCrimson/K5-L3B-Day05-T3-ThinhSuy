@@ -224,6 +224,9 @@ Cách sửa nằm ở thiết kế, không chỉ ở câu chữ: thẻ "Đổi m
 - Người dùng thấy: thông báo "Trợ lý đã đổi nhầm - đang chuyển nhân viên", thẻ giữ chỗ BM 205 có đếm ngược, trạng thái "Nhân viên đã nhận ca".
 - Ai được báo: nhân viên, ngay lập tức, kèm tóm tắt (khách chọn BM 205, AI đã đổi sang BM 201, lần đổi miễn phí đã dùng).
 - AI không gọi `doi_chuyen_bay` lần nữa, vì lần đổi thứ hai không còn miễn phí và có thể làm hỏng thêm.
+- Với luật "chỉ nút mới thực hiện" (§4, luật 1), AI không thể tự đổi theo chữ, nên K13 chỉ còn xảy ra khi hệ thống lỗi.
+  Ca hay gặp hơn là khách tự bấm "Xác nhận đổi" nhầm chuyến: đó là lỗi người dùng, và prototype demo đúng ca này.
+  AI không xin lỗi thay cho lỗi không phải của mình và không đổ lỗi khách: nó dẫn lại lần bấm trong lịch sử ("Theo lịch sử, chị đã bấm 'Xác nhận đổi' cho BM 205 lúc 12:46"), nói thật nó không tự đổi lại được, giữ chỗ chuyến khách muốn và chuyển nhân viên ngay.
 
 ### Ba loại lỗi, ba cách nói, ba cách sửa
 
