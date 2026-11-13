@@ -4,7 +4,7 @@
 
 | Họ và Tên | Mã Học Viên | Việc đã làm |
 | --- | --- | --- |
-| Dương Minh Chiến | 2A202603921 | **§2 · Kịch bản rủi ro:** lập 13 kịch bản và bảng phủ hard test của track, đề xuất hai kịch bản đắt nhất và các kịch bản suýt được chọn; trình bày lát cắt và kịch bản khi demo. |
+| Dương Minh Chiến | 2A202603921 | **§2 · Kịch bản rủi ro:** lập 13 kịch bản và bảng phủ hard test của track, đề xuất hai kịch bản đắt nhất và các kịch bản suýt được chọn. **§6 · Tốt là gì:** chấm thử prototype trên K6 và K12, viết lại ba tiêu chí Pass/Fail và các lỗi còn lại; kiểm thử prototype và báo lỗi cho nhóm sửa. Trình bày lát cắt và kịch bản khi demo. |
 | Trịnh Hưng Thịnh | 2A202603907 | **§5 · Prototype:** bản nháp đầu §3-§6 (bảng mức tự chủ §4, tiêu chí §6), dựng prototype và ảnh đánh số; bấm prototype và trả lời ca lạ khi demo. |
 | Lưu Nguyễn Chí Đức | 2A202603923 | **§1, §3, §4 · Phạm vi, khi AI sai, mức tự chủ:** viết §1, gộp §2 từ bản của ba người, hoàn thiện §3-§4; trình bày quyết định mức tự chủ khi demo. |
 
