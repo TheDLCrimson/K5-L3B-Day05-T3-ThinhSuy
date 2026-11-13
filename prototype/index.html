@@ -264,11 +264,12 @@ function choose(id, fromTap = true) {
   renderConfirm(id);
 }
 function doChange(id) {
+  if (st.changed || st.refunded || !flight(id) || !fits(flight(id)) || st.held !== id) return;
   addTap(`Xác nhận đổi ${id}`);
   stopHold(); st.changed = id; st.changedAt = new Date().toTimeString().slice(0, 5);
   const f = flight(id);
-  setState('Đã đổi vé sang ' + id + ' (mô phỏng)');
-  addAI(`Đã đổi vé của chị An và bé Bình sang ${f.id} ${f.time} ${f.day}. Lần đổi miễn phí đã dùng. Vé mới sẽ tới trong khoảng 60 phút.`, 'Trợ lý AI · sau khi khách bấm "Xác nhận đổi"');
+  setState('Mô phỏng: đã đổi sang ' + id, true);
+  addAI(`Mô phỏng trong prototype: BM 213 được đổi sang ${f.id} ${f.time} ${f.day} cho chị An và bé Bình. Không có thay đổi nào được gửi tới hãng bay, không có vé mới hay email thật.`, 'Prototype · chỉ cập nhật trạng thái minh hoạ sau nút xác nhận');
   renderDone();
 }
 function reportWrong() {
@@ -276,7 +277,7 @@ function reportWrong() {
   const right = FLIGHTS.filter(fits).map(f => f.id).find(id => id !== wrong);
   addUser(`Ơ mình bấm nhầm rồi, mình muốn ${right} cơ!`);
   hold(right);
-  addAI(`Theo lịch sử, chị đã bấm "Xác nhận đổi" cho ${wrong} lúc ${st.changedAt}, nên lần đổi miễn phí đã dùng và mình không tự đổi lại được. Mình đã giữ 2 chỗ trên ${right} trong 20 phút và chuyển ca cho nhân viên kèm toàn bộ lịch sử chat; nhân viên sẽ xem chị còn đổi sang ${right} được không.`, 'Trợ lý AI · khách sửa sai (lỗi người dùng): không đổ lỗi, nói thật cái không làm được');
+  addAI(`Trong mô phỏng, chị đã bấm "Xác nhận đổi" cho ${wrong} lúc ${st.changedAt}; prototype không thể hoàn tác giao dịch thật vì không có kết nối hãng. Mình đã giữ tạm 2 chỗ trên ${right} trong 20 phút và chuyển ca cho nhân viên kèm lịch sử để minh hoạ cách xử lý.`, 'Prototype · mô phỏng đường sửa sai, không thay đổi vé thật');
   toStaff(`Khách đã bấm xác nhận ${wrong} lúc ${st.changedAt} rồi báo bấm nhầm, muốn ${right}. Lần đổi miễn phí đã dùng. Đang giữ 2 chỗ trên ${right}.`, true);
 }
 function openRefund() {
@@ -290,11 +291,12 @@ function updateRefundBtn() {
 }
 function sendRefund() {
   const names = [...document.querySelectorAll('.refundPax')].filter(c => c.checked).map(c => c.value);
+  if (!names.length || !$('refundConfirm').checked || st.refunded || st.changed) return;
   $('refundModal').classList.remove('show');
   addTap(`Gửi yêu cầu hoàn cho ${names.join(' và ')}`);
   stopHold(); st.refunded = true;
-  setState('Đã gửi yêu cầu hoàn (mô phỏng)', true);
-  addAI(`Đã gửi yêu cầu hoàn cho ${names.join(' và ')}. Biên nhận đã gửi vào app và email: tiền về phương thức thanh toán gốc, tối đa 90 ngày. Yêu cầu này không huỷ được.`, 'Trợ lý AI · sau khi khách bấm "Gửi yêu cầu hoàn"');
+  setState('Mô phỏng: hoàn tất luồng hoàn', true);
+  addAI(`Mô phỏng trong prototype: luồng yêu cầu hoàn cho ${names.join(' và ')} đã hoàn tất. Không có yêu cầu thật nào được gửi, không có biên nhận hay email thật.`, 'Prototype · chỉ cập nhật trạng thái minh hoạ sau nút xác nhận');
   setBoard(`<div class="actions">${handoffBtn}</div>`);
 }
 
@@ -304,7 +306,7 @@ function toStaff(reason, urgent) {
   $('queueCount').textContent = '1';
   $('queueItem').innerHTML = `<b>TRV-7Q2K · Nguyễn Minh An</b><br>${reason}<br><span class="pill ${urgent ? 'urgent' : 'person'}">${urgent ? 'Cần xem ngay' : 'Mới chuyển'}</span>`;
   $('staffState').textContent = 'Chờ tiếp nhận';
-  $('staffSummary').textContent = `BM 213 Hà Nội → TP.HCM 12/11 19:00 huỷ do bão, 2 hành khách (An 34 tuổi, Bình 5 tuổi). ${reason} Vé: ${st.changed ? 'đã đổi sang ' + st.changed : 'chưa đổi'}. Hoàn: ${st.refunded ? 'đã gửi' : 'chưa gửi'}.`;
+  $('staffSummary').textContent = `BM 213 Hà Nội → TP.HCM 12/11 19:00 huỷ do bão, 2 hành khách (An 34 tuổi, Bình 5 tuổi). ${reason} Vé: ${st.changed ? 'prototype đã mô phỏng đổi sang ' + st.changed : 'chưa đổi'}. Hoàn: ${st.refunded ? 'prototype đã mô phỏng hoàn tất luồng' : 'chưa gửi'}.`;
   $('staffLog').innerHTML = history.map(h => `<p><b>${h.role === 'user' ? 'Khách' : 'Trợ lý'}:</b> ${h.content.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('');
   addNote(`<span class="pill person">Chuyển người</span> Nhân viên hỗ trợ đã nhận ca kèm tóm tắt và lịch sử chat; chị không cần kể lại từ đầu. <button class="btn small" onclick="switchScreen('staff')">Xem màn hình nhân viên</button>`);
   if (!st.changed && !st.refunded) renderChoices(); else setBoard('');
