@@ -93,7 +93,7 @@ nav{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
 <nav><button class="btn primary" id="customerTab">Màn hình khách hàng</button><button class="btn" id="staffTab">Màn hình nhân viên · <span id="queueCount">0</span> ca chờ</button><label class="muted" style="margin-left:auto;align-self:center"><input type="checkbox" checked id="showNotes"> Hiện số chú thích HAX/PAIR</label></nav>
 
 <div class="layout" id="customerScreen">
-<aside class="card booking"><h2>Đặt chỗ TRV-7Q2K</h2><div class="route">Hà Nội <span class="muted">→</span> TP. Hồ Chí Minh</div><div class="muted">Phổ thông tiết kiệm · đặt qua app</div><div class="cancel"><b>BM 213 · 12/11 · 19:00 · ĐÃ HUỶ</b><br>Lý do theo dữ liệu đặt chỗ: thời tiết (bão)</div><div class="pass"><b>Nguyễn Minh An</b><div class="muted">34 tuổi · hành khách 1</div></div><div class="pass"><b>Nguyễn Gia Bình</b><div class="muted">5 tuổi · hành khách 2</div></div><p class="muted">Chính sách Bay Mẫu: đổi miễn phí 1 lần trong 48 giờ, hoặc hoàn toàn bộ. Huỷ do thời tiết không có bồi thường tiền mặt.</p></aside>
+<aside class="card booking"><h2>Đặt chỗ TRV-7Q2K</h2><div class="route">Hà Nội <span class="muted">→</span> TP. Hồ Chí Minh</div><div class="muted">Phổ thông tiết kiệm · đặt qua app</div><div class="cancel"><b>BM 213 · 12/11 · 19:00 · ĐÃ HUỶ</b><br>Lý do theo dữ liệu đặt chỗ: thời tiết (bão)</div><div class="pass"><b>Nguyễn Minh An</b><div class="muted">34 tuổi · hành khách 1</div></div><div class="pass"><b>Nguyễn Gia Bình</b><div class="muted">5 tuổi · hành khách 2</div></div><p class="muted">Chính sách Bay Mẫu: đổi miễn phí 1 lần trong 48 giờ hoặc hoàn toàn bộ.</p></aside>
 <section class="card chat"><div class="chathead"><div><h1>Trao đổi với trợ lý AI</h1><div class="muted">Trợ lý tự tra cứu và giữ chỗ tạm; đổi vé hay gửi hoàn chỉ chạy khi bạn bấm xác nhận.</div></div><span id="state" class="state">Chưa thay đổi vé</span></div>
 <div id="msgs" class="msgs"></div>
 <div class="entry"><input id="message" value="ok" aria-label="Tin nhắn của khách"><button class="btn primary" id="send">Gửi</button></div>
@@ -188,12 +188,12 @@ const handoffBtn = '<button class="btn" onclick="handoff(\'Khách bấm Chuyển
 
 function cardHTML(f) {
   if (!fits(f)) {
-    return `<div class="flight blocked"><div><b>${f.id}</b> · ${f.time} ${f.day}<small>còn ${f.seats} chỗ · Không đủ chỗ cho ${PAX.length} người</small></div><div class="fbtns"><button class="btn small" disabled>Không chọn được</button></div></div>`;
+    return `<div class="flight blocked"><div><b>${f.id}</b> · ${f.time} ${f.day}<small>còn ${f.seats} chỗ · Không đủ chỗ cho ${PAX.length} người</small><small class="src">Theo đặt chỗ TRV-7Q2K lúc 15:00</small></div><div class="fbtns"><button class="btn small" disabled>Không chọn được</button></div></div>`;
   }
   const held = st.held === f.id;
   const holdLine = held ? `<small class="holdline"><span class="mark">③</span>Đang giữ tạm, chưa đổi vé · còn <span class="timer" id="clock">${fmt(st.secs)}</span> <span class="pill">Tự làm · hoàn tác được</span></small>` : '';
   const release = held ? '<button class="btn small" onclick="releaseHold()">Bỏ giữ chỗ</button>' : '';
-  return `<div class="flight ${held ? 'held' : ''}"><div><b>${f.id}</b> · ${f.time} ${f.day}<small>còn ${f.seats} chỗ · đủ cho An + Bình</small>${holdLine}</div><div class="fbtns">${release}<button class="btn small primary" onclick="choose('${f.id}')">Chọn ${f.id} ${f.time} · An + Bình</button></div></div>`;
+  return `<div class="flight ${held ? 'held' : ''}"><div><b>${f.id}</b> · ${f.time} ${f.day}<small>còn ${f.seats} chỗ · đủ cho An + Bình</small><small class="src">Theo đặt chỗ TRV-7Q2K lúc 15:00</small>${holdLine}</div><div class="fbtns">${release}<button class="btn small primary" onclick="choose('${f.id}')">Chọn ${f.id} ${f.time} · An + Bình</button></div></div>`;
 }
 const SOURCE = '<div class="evidence"><span class="mark">②</span>Nguồn: tra_cuu_dat_cho · đặt chỗ TRV-7Q2K lúc 15:00, 12/11/2026. Dữ liệu chỉ có giờ cất cánh và số chỗ, không có giờ hạ cánh.</div>';
 
@@ -398,5 +398,6 @@ checkLive();
 // Shareable demo states for screenshots and live presentation; normal use starts in the customer flow.
 const demoMode = new URLSearchParams(location.search).get('demo');
 if (demoMode === 'K6') { $('message').value = 'ok'; setTimeout(() => sendMessage(), 250); }
+if (demoMode === 'confirm') { $('message').value = 'ok'; setTimeout(() => sendMessage().then(() => choose('BM 201', false)), 250); }
 if (demoMode === 'staff') { setTimeout(() => { toStaff('Khách trả lời “ok” sau khi xem các chuyến; cần làm rõ lựa chọn. '); switchScreen('staff'); }, 250); }
 </script></body></html>
