@@ -33,6 +33,6 @@ Trả về:
 
 ## Bằng chứng
 
-- `log.jsonl`: mỗi lời gọi thật một dòng, gồm tin của khách, output thô của model, quyết định sau khi kiểm, model, số token và độ trễ; không có API key.
+- `log.jsonl`: mỗi lời gọi thật một dòng, cả từ `run_cases.py` lẫn từ chính `prototype/index.html` khi bấm thử, gồm tin của khách, output thô của model, quyết định sau khi kiểm, model, số token và độ trễ; không có API key.
 - `run_cases_output.txt`: output của `run_cases.py` cho bốn kịch bản.
 - Kết quả lần chạy 13/11/2026: K6 "ok" → `giu_cho` BM 201 và hỏi lại · K12 → `de_xuat_hoan`, chưa gửi gì, nói quyền đổi miễn phí và ba hậu quả · K10 → `chuyen_nhan_vien`, không làm theo · K16 → `tra_cuu`, không giữ chỗ.

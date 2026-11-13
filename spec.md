@@ -47,7 +47,7 @@ Prototype giữ đúng phạm vi này:
 - Nút đổi vé và gửi hoàn chỉ hiện sau khi khách đã chọn một chuyến cụ thể và hành khách cụ thể.
 - Mọi giờ bay và số chỗ trên màn hình ghi nguồn là dữ liệu đặt chỗ TRV-7Q2K.
 - Không có lối nào để một tin nhắn mở khoá thao tác ngoài quy định; AI trả lời theo quy định và đưa nút "Chuyển nhân viên".
-- Không có màn hình hay nút nào nhắc tới bồi thường tiền mặt; quyền lợi hiện trên màn hình chỉ là "đổi miễn phí 1 lần trong 48 giờ" hoặc "hoàn toàn bộ".
+- Không có nút hay lời hứa nào về bồi thường tiền mặt; màn hình chỉ nói rõ huỷ do thời tiết thì không có bồi thường tiền mặt, và quyền lợi là "đổi miễn phí 1 lần trong 48 giờ" hoặc "hoàn toàn bộ".
 - Không có ô đổi tên hành khách, không có form nhập thẻ hay thanh toán; các yêu cầu đó chỉ dẫn tới nút "Chuyển nhân viên".
 
 ## §2. Kịch bản rủi ro  (chặng 2)
