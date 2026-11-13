@@ -243,25 +243,100 @@ Cách sửa nằm ở thiết kế, không chỉ ở câu chữ: thẻ "Đổi m
 
 ## §4. Mức tự chủ  (chặng 4)
 
-> Nháp của Thịnh. Ở chặng 4, cả nhóm bỏ phiếu riêng 5 phút cho từng tool để ghi lại ai chọn gì ở mục tool khó xếp nhất, rồi thử mức trên K6, K12 và kịch bản bình thường K16.
+Cách làm: mỗi người tự xếp mức cho cả năm tool trong 5 phút, không bàn, rồi cả nhóm so và chốt; bảng gốc là bản nháp của Thịnh.
 
-| Tool | Mức | Cost-of-error, phương án đã cân nhắc |
+| Tool | Mức của nhóm | Đảo lại được không |
 | --- | --- | --- |
-| `tra_cuu_dat_cho` | Tự làm | Chỉ đọc, sai có thể đối chiếu mã và truy vấn lại; bắt duyệt từng lần gây chậm vô ích. Không tự điền dữ liệu thiếu. |
-| `giu_cho_chuyen_moi` | Tự làm sau khi khách chọn rõ chuyến + hành khách | Tự hết sau 20 phút, không đổi vé; khách mất ít hơn việc chờ. Đã cân nhắc yêu cầu nhân viên duyệt nhưng chậm làm mất chỗ. |
-| `doi_chuyen_bay` | Cần khách duyệt | Khách thấy chuyến, hành khách, giờ và "dùng lần đổi miễn phí duy nhất"; khó đảo và chuyến khác có thể hết. Không cấm hoàn toàn vì xác nhận rõ có thể chặn nhầm. |
-| `gui_yeu_cau_hoan_ve` | Cần khách duyệt ở bước xác nhận riêng | Gửi không huỷ được, ảnh hưởng chỗ và tiền; người duyệt thấy người, số khách, hậu quả, thời gian và phương thức hoàn. Không tự làm; cấm hoàn toàn bị loại vì khách vẫn cần quyền yêu cầu. |
-| `chuyen_nhan_vien` | Tự làm | Đảo được, chi phí là thời gian chờ; tự chuyển khi ngoại lệ, dữ liệu mâu thuẫn hoặc khách báo đổi nhầm. Không yêu cầu duyệt chuyển. |
+| `tra_cuu_dat_cho` | **Tự làm** | Chỉ đọc |
+| `giu_cho_chuyen_moi` | **Tự làm, có luật** (bỏ phiếu ban đầu: cần duyệt) | Được: tự nhả sau 20 phút, có nút "Bỏ giữ chỗ" |
+| `doi_chuyen_bay` | **Cần khách duyệt** trên màn xác nhận | Khó: mất lần đổi miễn phí, không có tool hoàn tác |
+| `gui_yeu_cau_hoan_ve` | **Cần khách duyệt** trên màn xác nhận cuối tách riêng | Không: gửi rồi không huỷ được |
+| `chuyen_nhan_vien` | **Tự làm** | Được |
 
-**Tool khó xếp nhất** *(nháp)*: `giu_cho_chuyen_moi`.
-Tự làm thì nhanh nhưng có thể giữ sai chuyến; chờ nhân viên duyệt thì chuyến ít chỗ có thể hết.
-Chốt tự làm **chỉ sau lựa chọn rõ**, vì giữ chỗ tự nhả sau 20 phút và không thay vé.
-Tách `giu_cho_chuyen_moi` khỏi `doi_chuyen_bay` để hai bước có hai ngưỡng khác nhau.
-*(chặng 4: bổ sung mỗi người đã chọn gì và cái giá của mỗi phía, trỏ về kịch bản ở §2)*
+Không tool nào ở mức **cấm**: những việc AI không được làm (đổi tên, trẻ bay một mình, bồi thường, thu tiền) không có tool nào trong bảng, nên chúng nằm ở §1 và luôn dẫn tới `chuyen_nhan_vien`.
 
-**Thử mức trên K6, K12, K16:** *(chặng 4)*
+### `tra_cuu_dat_cho` - tự làm
 
-**Lời hứa đã đổi** *(nháp)*: từ "AI tự đổi chuyến cho bạn" thành "AI tìm và giữ lựa chọn; bạn xác nhận trước khi vé đổi hoặc yêu cầu hoàn được gửi".
+- Sai thì ai chịu gì: AI đọc sai hoặc đọc thiếu (K1 bỏ sót "ĐÃ HUỶ", K4 không đếm người), khách nhận thông tin sai nhưng chưa mất vé hay tiền, vì tool không thay đổi gì.
+- Đảo lại được không: không có gì để đảo; tra lại là xong.
+- Chờ người thì mất gì: mỗi câu hỏi thường (K16) phải chờ duyệt một thao tác chỉ đọc, chờ vô ích.
+- Đã loại "cần duyệt": duyệt không chặn được cái sai, vì cái sai nằm ở cách AI đọc kết quả chứ không ở việc gọi tool; cái sai đó được chặn bằng luật ở §1 (giờ bay, chỗ trống chỉ lấy từ dữ liệu, có ghi nguồn) và luật 3 bên dưới.
+
+### `giu_cho_chuyen_moi` - tự làm, có luật
+
+- Sai thì ai chịu gì: giữ nhầm chuyến, hoặc chiếm chỗ của hành khách khác trong tối đa 20 phút.
+- Đảo lại được không: được, chỗ giữ tự nhả sau 20 phút và khách bấm "Bỏ giữ chỗ" bất cứ lúc nào; giữ chỗ không thay vé.
+- Chờ người thì mất gì: BM 205 chỉ còn 4 chỗ và BM 217 còn 1, nên chuyến khách cần có thể hết trong lúc khách phân vân (K6, K15).
+- Luật: chỉ giữ chuyến sớm nhất có đủ chỗ cho mọi hành khách trong đặt chỗ, một chuyến một lúc, đúng số chỗ bằng số hành khách; chỉ giữ khi khách đã tỏ ý muốn đổi chuyến (K6 "ok", K5 "sáng mai"), không giữ khi khách chỉ hỏi thông tin (K1, K16).
+- Lý do đổi từ phiếu ban đầu: xem "Tool khó xếp nhất".
+
+### `doi_chuyen_bay` - cần khách duyệt
+
+- Ai duyệt: hành khách.
+- Người duyệt thấy gì: chuyến, giờ cất cánh, hành khách (An + Bình) và dòng "Đổi vé sẽ dùng lần đổi miễn phí duy nhất, không đổi lại được", kèm nút "Xác nhận đổi" và "Quay lại".
+- Quá hạn thì sao: không đổi gì; nếu chỗ giữ hết 20 phút mà khách chưa xác nhận, chỗ tự nhả và ca được chuyển nhân viên kèm tóm tắt (§3, K6).
+- Sai thì ai chịu gì: khách mất lần đổi miễn phí duy nhất, và chuyến khách thật sự cần có thể hết chỗ trong lúc gỡ (K6, K13).
+- Đảo lại được không: khó; không có tool hoàn tác, lần đổi thứ hai không còn miễn phí.
+- Chờ người thì mất gì: một lần bấm, vài giây, vì chỗ đã được giữ trong lúc chờ.
+- Đã loại "tự làm": K5, K6, K15 đều là AI tự đổi theo một câu chưa rõ chuyến nào, cho ai.
+- Đã loại "cấm": khách vẫn cần đổi chuyến, và cấm thì khách quay lại tự bấm qua từng bước Đổi lịch ("đừng bắt tôi bấm qua mười màn hình", lời hành khách trong track); một bước xác nhận là đủ chặn, vì cái sai là "chưa rõ chuyến nào, cho ai", đúng điều màn xác nhận làm rõ.
+
+### `gui_yeu_cau_hoan_ve` - cần khách duyệt, ở màn xác nhận cuối tách riêng
+
+- Ai duyệt: hành khách.
+- Người duyệt thấy gì: ô chọn hành khách (An, Bình), ba hậu quả (không huỷ được · tiền về phương thức thanh toán gốc · tới 90 ngày), thẻ "Đổi miễn phí" đặt ngay bên cạnh, nút "Gửi yêu cầu hoàn (không huỷ được)" và "Quay lại".
+- Quá hạn thì sao: không gửi gì; khách vẫn chưa rõ sau một lượt hỏi lại thì chuyển nhân viên ngay (§3, K12).
+- Sai thì ai chịu gì: khách mất cả hai chỗ, tiền về tới 90 ngày, trong khi vẫn còn chuyến đổi miễn phí đủ chỗ (K12, K14).
+- Đảo lại được không: không, kể cả nhân viên.
+- Chờ người thì mất gì: khách thật sự muốn hoàn mất thêm một màn hình; không phải chờ nhân viên.
+- Đã loại "tự làm": K12.
+- Đã loại "cấm": khách có quyền hoàn toàn bộ theo chính sách Bay Mẫu, và cấm chỉ đẩy cùng một cú bấm sang luồng Hoàn tiền thường, nơi khách không được nhắc quyền đổi miễn phí; ở K12 cái sai là lỗi ngữ cảnh (khách thiếu thông tin), nên một màn xác nhận đưa đúng thông tin đó là đủ chặn.
+- Đã loại "nhân viên duyệt mọi yêu cầu hoàn": chặn được mọi lỗi, nhưng mọi khách muốn hoàn thật phải chờ người, và nhân viên cũng không biết ý khách rõ hơn một màn xác nhận ghi đủ hậu quả.
+
+### `chuyen_nhan_vien` - tự làm
+
+- Sai thì ai chịu gì: chuyển khi chưa cần, khách mất thời gian chờ người; chỗ đã được giữ nên không mất chuyến.
+- Đảo lại được không: được.
+- Chờ người thì mất gì: ở đúng những ca phải chuyển (K8 trẻ bay một mình, K13 AI đổi nhầm), hỏi "chị có muốn chuyển nhân viên không?" làm chậm đúng lúc khách cần người nhất.
+- Đã loại "cần duyệt": vì lý do trên; khách vẫn luôn có nút "Chuyển nhân viên" để tự chuyển bất cứ lúc nào.
+
+### Tool khó xếp nhất: `giu_cho_chuyen_moi`
+
+- **Mỗi người đã chọn gì:** trong 5 phút bỏ phiếu riêng, cả ba người (Chiến, Thịnh, Đức) đều xếp `giu_cho_chuyen_moi` ở mức **cần duyệt**, với ba lý do:
+  - Giữ chỗ chiếm những chỗ cuối mà các hành khách khác cùng bị huỷ chuyến cũng cần (BM 217 còn 1, BM 205 còn 4).
+  - Nhóm chưa chắc giữ chỗ có thật sự rẻ và đảo được hay không, nên chọn an toàn.
+  - Khách nên tự quyết mọi thao tác trên đặt chỗ của mình, kể cả thao tác đảo được.
+- **Cái giá của mỗi phía:**
+  - Cần duyệt: thử trên K6, khách chỉ trả lời "ok" thì rất có thể cũng không bấm nút "Giữ chỗ"; trong lúc đó BM 205 (4 chỗ) có thể hết, và khi khách quay lại thì chuyến cần đã mất. Đây là lỗi "chờ" mà §1 đã nói là đắt hơn với tool này.
+  - Tự làm: AI có thể giữ nhầm chuyến (K5, nếu khách thật ra muốn 09:30) hoặc giữ BM 217 cho 2 người khi chỉ có 1 chỗ (K15), và chiếm chỗ của khách khác.
+- **Cách nhóm chốt: đổi sang tự làm, kèm luật.** Ba lý do của phiếu ban đầu được trả lời như sau:
+  - "Chưa chắc có rẻ không": bảng tool của track ghi `giu_cho_chuyen_moi` "Được: hết 20 phút tự nhả" và "chưa đổi vé", nên cái giá tối đa là 20 phút trên đúng số chỗ bằng số hành khách.
+  - "Chiếm chỗ của khách khác": luật chỉ cho giữ một chuyến một lúc, đúng số chỗ cần, và nhả chỗ cũ ngay khi khách chọn chuyến khác.
+  - "Khách tự quyết": chỗ giữ hiện rõ trên màn hình với nhãn "Đang giữ tạm, chưa đổi vé", đồng hồ đếm ngược và nút "Bỏ giữ chỗ" (G9), nên khách vẫn quyết, chỉ là sau chứ không trước; còn mọi thao tác đổi vé hay hoàn đều vẫn cần khách duyệt.
+
+### Luật thêm và tool tách bước
+
+1. **Chỉ nút mới thực hiện (tách "đề xuất" khỏi "thực hiện").**
+   AI chỉ soạn thẻ xác nhận cho `doi_chuyen_bay` và `gui_yeu_cau_hoan_ve`; hai tool này chỉ chạy khi khách bấm nút mang theo mã chuyến và danh sách hành khách, không bao giờ chạy từ tin nhắn chữ.
+   Chặn được K6 ("ok"), K12 ("huỷ hết") và K10 (tin tự xưng nhân viên không có nút nào để bấm thay khách); lý do ở §3, "Lỗi sửa câu chữ không cứu được".
+2. **Luật giữ chỗ tự động** (ở trên): chuyến sớm nhất đủ chỗ cho mọi hành khách, một chuyến một lúc, chỉ khi khách đã tỏ ý muốn đổi.
+3. **Đối chiếu số chỗ với số hành khách trước khi đề xuất:** chuyến không đủ chỗ cho mọi hành khách hiện mờ với nhãn "Không đủ chỗ cho N người" và không có nút chọn (chặn K4, K15).
+4. **Trẻ em sẽ bay một mình, đổi tên hành khách: luôn `chuyen_nhan_vien`** (chặn K7, K8, K9; §1 việc không làm số 5).
+
+### Thử mức trên 2 kịch bản đắt nhất và 1 kịch bản bình thường
+
+| Kịch bản | Với mức này AI làm gì | Cái sai có bị chặn không? | Còn làm khi lẽ ra phải hỏi? | Người dùng bình thường có phải chờ vô ích? |
+| --- | --- | --- | --- | --- |
+| K6 "ok" | Tự giữ BM 201 cho An + Bình, hỏi lại kèm nút chọn; chỉ đổi khi khách bấm "Xác nhận đổi" | Có: `doi_chuyen_bay` không chạy từ chữ "ok" (luật 1) | Chỉ có giữ chỗ, và đó là chủ ý: giữ chỗ đảo được, hiện rõ, tự nhả | Không: một câu hỏi và một lần bấm, không cần nhân viên |
+| K12 "huỷ hết, hoàn tiền" | Không gửi gì, nói quyền đổi miễn phí và ba hậu quả, đưa thẻ "Đổi miễn phí" cạnh thẻ "Hoàn tiền"; chỉ gửi khi khách bấm trên màn xác nhận cuối | Có: `gui_yeu_cau_hoan_ve` không chạy từ câu nói (luật 1) | Không: không có thao tác nào chạy trước khi khách chọn | Khách muốn hoàn thật mất thêm một màn hình, không phải chờ nhân viên |
+| K16 "sáng mai còn chuyến nào đủ chỗ cho 2 mẹ con?" | Tự tra cứu, liệt kê BM 201 (9 chỗ) và BM 205 (4 chỗ) có ghi nguồn; không giữ chỗ vì khách mới hỏi thông tin | Có: BM 217 không hiện như chuyến sáng mai và không đủ chỗ (luật 3) | Không | Không: trả lời ngay, không duyệt, không chuyển người |
+
+Rủi ro còn lại: luật giữ chỗ dựa vào việc AI nhận ra khách "đã tỏ ý muốn đổi"; nếu AI nhận nhầm thì cái giá là một chỗ giữ 20 phút mà khách bỏ được bằng một nút.
+
+### Một mức tự chủ đã đổi lời hứa với người dùng
+
+- Với `doi_chuyen_bay` và `gui_yeu_cau_hoan_ve`, lời hứa đổi từ "AI tự đổi chuyến, tự hoàn tiền cho bạn" thành "AI tìm và soạn sẵn; bạn bấm xác nhận trước khi vé đổi hoặc yêu cầu hoàn được gửi".
+- Với `giu_cho_chuyen_moi`, việc chuyển từ cần duyệt sang tự làm thêm một lời hứa mới: "AI có thể giữ tạm chỗ cho bạn trước khi hỏi, nhưng không bao giờ đổi vé hay gửi hoàn khi bạn chưa bấm, và bạn bỏ chỗ giữ được bất cứ lúc nào".
 
 ## §5. Prototype  (chặng 5)
 
