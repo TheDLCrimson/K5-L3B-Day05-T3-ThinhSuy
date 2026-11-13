@@ -395,4 +395,8 @@ addAI(LISTED, 'Trợ lý AI · tra_cuu_dat_cho');
 renderChoices();
 ready = true;
 checkLive();
+// Shareable demo states for screenshots and live presentation; normal use starts in the customer flow.
+const demoMode = new URLSearchParams(location.search).get('demo');
+if (demoMode === 'K6') { $('message').value = 'ok'; setTimeout(() => sendMessage(), 250); }
+if (demoMode === 'staff') { setTimeout(() => { toStaff('Khách trả lời “ok” sau khi xem các chuyến; cần làm rõ lựa chọn. '); switchScreen('staff'); }, 250); }
 </script></body></html>

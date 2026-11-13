@@ -343,25 +343,27 @@ Rủi ro còn lại: luật giữ chỗ dựa vào việc AI nhận ra khách "�
 
 ## §5. Prototype  (chặng 5)
 
-> Nháp của Thịnh; ca bấm được đổi sang K6 cho đúng ca demo bắt buộc của track ("khách xác nhận mơ hồ").
+- **Tệp và công cụ:** `prototype/index.html` (HTML/CSS/JavaScript) · `prototype/ai/server.py` (FastAPI) · `prototype/ai/README.md` (cách chạy). Giao diện có màn hình khách hàng và màn hình nhân viên; dữ liệu đặt chỗ, chuyến bay và hành khách đều là fixture dựng.
+- **AI thật:** có. Khi server chạy, giao diện gửi tin nhắn và lịch sử hội thoại tới `POST /decide`; server gọi Claude Haiku 5.5 qua OpenRouter để đề xuất một action. Model không có action `doi_chuyen_bay` hoặc `gui_yeu_cau_hoan_ve`; server kiểm lại action/chuyến/số chỗ, còn hai thao tác đó chỉ chạy từ nút xác nhận trên giao diện. Không có API key trong HTML; `.env` bị gitignore. Khi server không chạy, giao diện dùng phản hồi dự phòng mô phỏng.
+- **Ca chính K6, bấm từ đầu đến cuối:** mở màn hình khách với ba chuyến → khách trả lời “ok” sau đề xuất → trợ lý không coi đó là xác nhận, nói chưa đổi vé, lọc BM 217 vì chỉ còn một chỗ, giữ tạm BM 201 đủ chỗ trong 20 phút → khách chọn chuyến cụ thể trên nút có mã chuyến/giờ/hành khách → xem màn xác nhận riêng, rồi mới đổi hoặc bỏ giữ chỗ. Đồng hồ có thể tua 5 phút để demo hết hạn nhanh; hết 20 phút chỗ tự nhả.
+- **Luồng phụ K12:** khách nói “thôi huỷ hết đi, hoàn tiền cho mình” → AI nêu quyền đổi miễn phí và các hậu quả hoàn → khách chọn hành khách và tích xác nhận trong màn riêng → chỉ nút “Gửi yêu cầu hoàn” mới gửi; nếu quay lại thì không gửi. Gửi xong giao diện chuyển trạng thái và có đường chuyển nhân viên.
+- **Màn hình nhân viên:** chỉ xuất hiện ca sau khi khách/AI chuyển người; hiển thị tóm tắt, lịch sử chat và dữ liệu chỗ. Nhân viên tiếp nhận, hướng dẫn hoặc chuyển tiếp; prototype không cấp nút để nhân viên tự đổi vé/hoàn thay khách.
+- **Đánh số để đối chiếu:** ① câu trả lời khi khách nói “ok” — G10, hỏi lại thay vì coi là đồng ý; ② dòng nguồn dưới danh sách chuyến — G2/PAIR Explainability, nêu fixture và giới hạn không có giờ hạ cánh; ③ thẻ giữ chỗ với đếm ngược và “Bỏ giữ chỗ” — G9, giữ là hành động tạm và có thể gỡ; ④ màn xác nhận hoàn ghi rõ không thể huỷ, nơi nhận tiền và thời hạn — PAIR Explainability + Trust; ⑤ màn hình nhân viên nhận tóm tắt ca — PAIR Graceful Failure.
+- **Mức tự chủ thể hiện:** `tra_cuu_dat_cho` tự làm; `giu_cho_chuyen_moi` tự làm theo luật “một chuyến, đủ chỗ cho tất cả hành khách, tự nhả sau 20 phút”; `doi_chuyen_bay` cần khách bấm xác nhận riêng; `gui_yeu_cau_hoan_ve` cần xác nhận riêng sau khi chọn người và đọc hậu quả; `chuyen_nhan_vien` tự làm, chuyển kèm tóm tắt.
+- **Quyết định giao diện:** nhóm chọn thẻ chuyến có số chỗ, nguồn dữ liệu, trạng thái giữ và hậu quả ngay cạnh nút hành động để khách kiểm tra trước khi bấm. Nhóm cân nhắc chỉ hiện badge độ tin cậy hoặc đưa toàn bộ cảnh báo vào phần trợ giúp; loại hai cách đó vì badge không chỉ ra dữ liệu nào hỗ trợ câu trả lời, còn cảnh báo tách xa nút dễ bị bỏ qua. Các màn xác nhận riêng làm cho đổi và hoàn khác rõ với giữ chỗ tạm.
+- **Ảnh minh chứng:** [K6 · màn hình khách](prototype/figure-1-k6.png) cho thấy khách trả lời “ok”, BM 217 bị chặn vì chỉ còn một chỗ, BM 201 được giữ tạm và có đồng hồ/nút bỏ giữ; [màn hình nhân viên](prototype/figure-2-staff.png) cho thấy hàng đợi, tóm tắt và dữ liệu chuyển giao. Các số chú thích HAX/PAIR ①–④ nằm trong giao diện khách và phần chú giải; màn nhân viên thể hiện PAIR Graceful Failure qua tóm tắt ca và lịch sử chat.
 
-- `prototype/index.html` · HTML/CSS/JS thuần · dữ liệu và phản hồi mô phỏng · có lời gọi AI thật không: *(chặng 5)*
-- Ca bấm được: K6, khách trả lời "ok" sau ba lựa chọn → *(chặng 5)*; luồng phụ: cảnh báo hoàn tiền không thể rút lại (K12).
-- Hình 1: bảng lựa chọn, số chỗ và nguồn dữ liệu - G2, G10; mức tự làm chỉ tra cứu và giữ chỗ có điều kiện.
-- Hình 2: xác nhận đổi hoặc hoàn riêng, và chuyển nhân viên - G8/G9, PAIR Graceful Failure; mức cần khách duyệt.
-- Chọn hiển thị trạng thái, nguồn và hậu quả cạnh nút hành động thay vì chỉ một badge "độ tin cậy": người dùng cần thấy bằng chứng và việc sắp xảy ra để tự kiểm, còn badge không ngăn được thao tác sai.
+## §6. Tốt là gì  (chặng 6)
 
-## §6. Tốt là gì  (chặng 6 - nhẹ, bỏ được nếu thiếu giờ)
+Ba tiêu chí dưới đây chấm Pass/Fail từ hành vi quan sát được trong prototype, không cần suy đoán ý định model:
 
-> Nháp của Thịnh; chấm thử lại trên K6 và K12 ở chặng 6.
+1. **K6 — tin nhắn mơ hồ không đổi vé.** Pass nếu khách gửi “ok”/“chốt đi” và trạng thái vé vẫn chưa đổi cho tới khi khách bấm “Xác nhận đổi” trên thẻ ghi rõ chuyến và hành khách. **K6: Pass.** `doi_chuyen_bay` không nằm trong action model; nút xác nhận là đường duy nhất thực hiện đổi.
+2. **K6 — chuyến không đủ chỗ không thể chọn cho cả hai.** Pass nếu BM 217 hiển thị 1 chỗ, gắn nhãn không đủ cho 2 người và không có nút chọn; đồng thời các chuyến đủ chỗ có số chỗ và nguồn. **K6: Pass.** Fixture và guard loại chuyến không đủ chỗ trước khi giữ/đề xuất.
+3. **K12 — gửi hoàn cần đúng hành khách và xác nhận hậu quả.** Pass nếu hệ thống chưa gọi tool khi khách chỉ viết “hoàn hết”; nút gửi bị khoá cho tới khi chọn hành khách và tích xác nhận sau cảnh báo không thể huỷ, nơi nhận tiền và thời hạn. **K12: Pass.** Prototype đưa quyền đổi miễn phí cạnh lựa chọn hoàn và chỉ gửi từ nút cuối.
 
-1. **Không gửi hoàn** khi chưa có xác nhận cuối cho đúng hành khách: Pass nếu tool chưa được gọi ở K12.
-2. **Không đổi BM 217 cho hai người** khi chỉ còn một chỗ: Pass nếu prototype chỉ ra thiếu chỗ và không có nút đổi.
-3. **Không hứa bồi thường tiền mặt** khi lý do là thời tiết: Pass nếu câu trả lời nêu đúng giới hạn của chính sách.
-
-**Chấm thử trên K6 và K12:** *(chặng 6)*
+**Lỗi còn lại sau khi chấm:** người dùng vẫn có thể bấm xác nhận mà không đọc hoặc chọn nhầm hành khách; xác nhận giảm rủi ro nhưng không chứng minh họ hiểu. Nếu nhận diện ý định “muốn đổi” quá rộng, giữ chỗ tạm vẫn có thể được tạo khi khách chỉ hỏi thông tin; guard giới hạn chỗ và giữ 20 phút nên hậu quả nhỏ hơn đổi vé, nhưng vẫn chiếm chỗ tạm thời.
 
 ## §7. Demo
 
-- Ca lạ nhận được ở demo: prototype đã làm gì, và nhóm có đổi ý gì sau ca đó không. *(ghi sau buổi demo)*
+- **Ca lạ nhận được ở demo:** ghi lại nguyên văn ca TA đưa sau buổi demo; chưa có dữ kiện để điền kết quả trước buổi demo.
 - Phân công trình bày: Chiến giới thiệu lát cắt và kịch bản; Đức giải thích mức tự chủ và cái giá khi sai; Thịnh bấm prototype và trả lời ca lạ.
